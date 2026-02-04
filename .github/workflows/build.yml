@@ -1,0 +1,47 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+            artifact: BinaryInputExtractor.exe
+          - os: macos-latest
+            name: macOS
+            artifact: BinaryInputExtractor
+          - os: ubuntu-latest
+            name: Linux
+            artifact: BinaryInputExtractor
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pdfplumber openpyxl pyinstaller
+    
+    - name: Build executable
+      run: |
+        pyinstaller --onefile --windowed --name BinaryInputExtractor binary_input_gui.py
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BinaryInputExtractor-${{ matrix.name }}
+        path: dist/${{ matrix.artifact }}
+        retention-days: 90
